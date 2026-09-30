@@ -33,9 +33,9 @@ function Login() {
         <p>Military Asset Management System</p>
         <form onSubmit={handleLogin}>
           <div className="form-group">
-            <label>Username / Email</label>
+            <label>Username</label>
             <input 
-              type="email" 
+              type="text" 
               className="form-control" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}

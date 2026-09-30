@@ -4,6 +4,8 @@ import { getUserRole, getUserBaseId } from '../utils/auth';
 
 function Dashboard() {
     const [metrics, setMetrics] = useState(null);
+    const [metricsLoading, setMetricsLoading] = useState(true);
+    const [metricsError, setMetricsError] = useState('');
     const [bases, setBases] = useState([]);
     const [equipmentTypes, setEquipmentTypes] = useState([]);
     const [selectedBase, setSelectedBase] = useState('');
@@ -42,6 +44,8 @@ function Dashboard() {
     useEffect(() => {
         const fetchMetrics = async () => {
             if (role === 'LOGISTICS_OFFICER') return;
+            setMetricsLoading(true);
+            setMetricsError('');
             try {
                 let url = '/dashboard/metrics?';
                 if (selectedBase) url += `baseId=${selectedBase}&`;
@@ -50,6 +54,9 @@ function Dashboard() {
                 setMetrics(res.data);
             } catch (err) {
                 console.error(err);
+                setMetricsError('Unable to load dashboard data.');
+            } finally {
+                setMetricsLoading(false);
             }
         };
         fetchMetrics();
@@ -221,32 +228,34 @@ function Dashboard() {
                 </div>
             </div>
 
-            {metrics ? (
+            {metricsLoading ? (
+                <p>Loading...</p>
+            ) : metricsError ? (
+                <p className="error-text">{metricsError}</p>
+            ) : metrics ? (
                 <div className="metrics-grid">
                     <div className="metric-card">
                         <div className="metric-title">Opening Balance</div>
-                        <div className="metric-value">{metrics.openingBalance}</div>
+                        <div className="metric-value">{metrics.openingBalance || 0}</div>
                     </div>
                     <div className="metric-card metric-card-interactive" onClick={openNetMovementModal}>
                         <div className="metric-title">Purchases/Transfers (Net)</div>
-                        <div className="metric-value">{metrics.netMovement}</div>
+                        <div className="metric-value">{metrics.netMovement || 0}</div>
                     </div>
                     <div className="metric-card">
                         <div className="metric-title">Assigned</div>
-                        <div className="metric-value">{metrics.assigned}</div>
+                        <div className="metric-value">{metrics.assigned || 0}</div>
                     </div>
                     <div className="metric-card">
                         <div className="metric-title">Expended</div>
-                        <div className="metric-value">{metrics.expended}</div>
+                        <div className="metric-value">{metrics.expended || 0}</div>
                     </div>
                     <div className="metric-card">
                         <div className="metric-title">Closing Balance</div>
-                        <div className="metric-value">{metrics.closingBalance}</div>
+                        <div className="metric-value">{metrics.closingBalance || 0}</div>
                     </div>
                 </div>
-            ) : (
-                <p>Loading...</p>
-            )}
+            ) : null}
 
             {showModal && (
                 <div className="modal-overlay" onClick={() => setShowModal(false)}>
@@ -287,6 +296,7 @@ function Dashboard() {
                     </div>
                 </div>
             )}
+
         </div>
     );
 }

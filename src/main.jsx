@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Equipment from './pages/Equipment';
 import Layout from './components/Layout';
 import './index.css';
 
@@ -18,6 +19,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<Layout />}>
           <Route index element={<Dashboard />} />
+          <Route path="equipment" element={<Equipment />} />
           <Route path="purchases" element={<Purchases />} />
           <Route path="transfers" element={<Transfers />} />
           <Route path="assignments" element={<Assignments />} />
