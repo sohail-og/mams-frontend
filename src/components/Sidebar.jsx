@@ -11,7 +11,7 @@ const Sidebar = () => {
             </div>
             <div className="nav-links">
                 <NavLink to="/" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>Dashboard</NavLink>
-                <NavLink to="/equipment" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>Equipment</NavLink>
+
                 <NavLink to="/purchases" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>Purchases</NavLink>
                 <NavLink to="/transfers" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>Transfers</NavLink>
                 {role !== 'LOGISTICS_OFFICER' && (
@@ -42,7 +42,7 @@ export const Navbar = () => {
     return (
         <div className="navbar">
             <div className="header-right">
-                <span>{getUserName()}</span>
+                <span>{formatRole(getUserRole())}</span>
                 <button onClick={handleLogout} className="logout-btn">Logout</button>
             </div>
         </div>

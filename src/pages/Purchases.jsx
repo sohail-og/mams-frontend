@@ -4,6 +4,8 @@ import { getUserRole, getUserBaseId } from '../utils/auth';
 
 function Purchases() {
     const [purchases, setPurchases] = useState([]);
+    const [filterDate, setFilterDate] = useState('');
+    const [filterEquipment, setFilterEquipment] = useState('');
     const [bases, setBases] = useState([]);
     const [equipmentTypes, setEquipmentTypes] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -99,7 +101,16 @@ function Purchases() {
             </div>
 
             <div className="card">
-                <h3>History</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3>History</h3>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <input type="date" className="form-control" value={filterDate} onChange={e => setFilterDate(e.target.value)} />
+                        <select className="form-control" value={filterEquipment} onChange={e => setFilterEquipment(e.target.value)}>
+                            <option value="">All Equipment</option>
+                            {equipmentTypes.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
+                        </select>
+                    </div>
+                </div>
                 <div className="table-container">
                     <table>
                         <thead>
@@ -112,16 +123,30 @@ function Purchases() {
                             </tr>
                         </thead>
                         <tbody>
-                            {purchases.map(p => (
-                                <tr key={p.id}>
-                                    <td>{p.id}</td>
-                                    <td>{p.base.name}</td>
-                                    <td>{p.equipmentType.name}</td>
-                                    <td>{p.quantity}</td>
-                                    <td>{new Date(p.date).toLocaleString()}</td>
-                                </tr>
-                            ))}
-                            {purchases.length === 0 && <tr><td colSpan="5">No purchases found.</td></tr>}
+                            {(() => {
+                                const filtered = purchases.filter(p => {
+                                    if (filterDate) {
+                                        const d = new Date(p.date).toISOString().split('T')[0];
+                                        if (d !== filterDate) return false;
+                                    }
+                                    if (filterEquipment && p.equipmentType.id.toString() !== filterEquipment) return false;
+                                    return true;
+                                });
+                                return (
+                                    <>
+                                        {filtered.map(p => (
+                                            <tr key={p.id}>
+                                                <td>{p.id}</td>
+                                                <td>{p.base.name}</td>
+                                                <td>{p.equipmentType.name}</td>
+                                                <td>{p.quantity}</td>
+                                                <td>{new Date(p.date).toLocaleString()}</td>
+                                            </tr>
+                                        ))}
+                                        {filtered.length === 0 && <tr><td colSpan="5">No purchases found.</td></tr>}
+                                    </>
+                                );
+                            })()}
                         </tbody>
                     </table>
                 </div>

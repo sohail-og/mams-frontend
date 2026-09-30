@@ -10,6 +10,8 @@ function Dashboard() {
     const [equipmentTypes, setEquipmentTypes] = useState([]);
     const [selectedBase, setSelectedBase] = useState('');
     const [selectedEquipment, setSelectedEquipment] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     
     // Modal state
     const [showModal, setShowModal] = useState(false);
@@ -49,7 +51,9 @@ function Dashboard() {
             try {
                 let url = '/dashboard/metrics?';
                 if (selectedBase) url += `baseId=${selectedBase}&`;
-                if (selectedEquipment) url += `equipmentTypeId=${selectedEquipment}`;
+                if (selectedEquipment) url += `equipmentTypeId=${selectedEquipment}&`;
+                if (startDate) url += `startDate=${startDate}&`;
+                if (endDate) url += `endDate=${endDate}&`;
                 const res = await api.get(url);
                 setMetrics(res.data);
             } catch (err) {
@@ -60,7 +64,7 @@ function Dashboard() {
             }
         };
         fetchMetrics();
-    }, [selectedBase, selectedEquipment, role]);
+    }, [selectedBase, selectedEquipment, startDate, endDate, role]);
 
     useEffect(() => {
         const fetchLogisticsData = async () => {
@@ -80,6 +84,18 @@ function Dashboard() {
                 if (selectedEquipment) {
                     pData = pData.filter(p => p.equipmentType.id.toString() === selectedEquipment);
                     tData = tData.filter(t => t.equipmentType.id.toString() === selectedEquipment);
+                }
+                if (startDate) {
+                    const start = new Date(startDate);
+                    start.setHours(0, 0, 0, 0);
+                    pData = pData.filter(p => new Date(p.date) >= start);
+                    tData = tData.filter(t => new Date(t.date) >= start);
+                }
+                if (endDate) {
+                    const end = new Date(endDate);
+                    end.setHours(23, 59, 59, 999);
+                    pData = pData.filter(p => new Date(p.date) <= end);
+                    tData = tData.filter(t => new Date(t.date) <= end);
                 }
 
                 let purchasesSum = pData.reduce((sum, p) => sum + p.quantity, 0);
@@ -120,7 +136,7 @@ function Dashboard() {
             }
         };
         fetchLogisticsData();
-    }, [selectedBase, selectedEquipment, role]);
+    }, [selectedBase, selectedEquipment, startDate, endDate, role]);
 
     if (role === 'LOGISTICS_OFFICER') {
         return (
@@ -140,6 +156,14 @@ function Dashboard() {
                             <option value="">All Equipment</option>
                             {equipmentTypes.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
                         </select>
+                    </div>
+                    <div className="form-group">
+                        <label>Start Date</label>
+                        <input type="date" className="form-control" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                    </div>
+                    <div className="form-group">
+                        <label>End Date</label>
+                        <input type="date" className="form-control" value={endDate} onChange={e => setEndDate(e.target.value)} />
                     </div>
                 </div>
 
@@ -193,10 +217,28 @@ function Dashboard() {
                 tData = tData.filter(t => t.equipmentType.id.toString() === selectedEquipment);
             }
 
+            if (startDate) {
+                const start = new Date(startDate);
+                start.setHours(0, 0, 0, 0);
+                pData = pData.filter(p => new Date(p.date) >= start);
+                tData = tData.filter(t => new Date(t.date) >= start);
+            }
+            if (endDate) {
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999);
+                pData = pData.filter(p => new Date(p.date) <= end);
+                tData = tData.filter(t => new Date(t.date) <= end);
+            }
+
             const transferIn = selectedBase ? tData.filter(t => t.toBase.id.toString() === selectedBase) : tData;
             const transferOut = selectedBase ? tData.filter(t => t.fromBase.id.toString() === selectedBase) : tData;
 
-            setModalData({ purchases: pData, transferIn, transferOut });
+            const purchasesSum = pData.reduce((sum, p) => sum + p.quantity, 0);
+            const transfersInSum = transferIn.reduce((sum, t) => sum + t.quantity, 0);
+            const transfersOutSum = transferOut.reduce((sum, t) => sum + t.quantity, 0);
+            const netMovement = purchasesSum + transfersInSum - transfersOutSum;
+
+            setModalData({ purchasesSum, transfersInSum, transfersOutSum, netMovement });
         } catch (err) {
             console.error(err);
         } finally {
@@ -225,6 +267,14 @@ function Dashboard() {
                         <option value="">All Equipment</option>
                         {equipmentTypes.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
                     </select>
+                </div>
+                <div className="form-group">
+                    <label>Start Date</label>
+                    <input type="date" className="form-control" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                </div>
+                <div className="form-group">
+                    <label>End Date</label>
+                    <input type="date" className="form-control" value={endDate} onChange={e => setEndDate(e.target.value)} />
                 </div>
             </div>
 
@@ -264,33 +314,24 @@ function Dashboard() {
                         <button onClick={() => setShowModal(false)} className="modal-close">×</button>
                         
                         {modalLoading ? <p>Loading details...</p> : (
-                            <div>
-                                <h4>Purchases</h4>
-                                <table style={{ marginBottom: '15px' }}>
-                                    <thead><tr><th>ID</th><th>Base</th><th>Equipment</th><th>Qty</th><th>Date</th></tr></thead>
-                                    <tbody>
-                                        {modalData.purchases.map(p => <tr key={p.id}><td>{p.id}</td><td>{p.base.name}</td><td>{p.equipmentType.name}</td><td>{p.quantity}</td><td>{new Date(p.date).toLocaleString()}</td></tr>)}
-                                        {modalData.purchases.length === 0 && <tr><td colSpan="5">No purchases.</td></tr>}
-                                    </tbody>
-                                </table>
-
-                                <h4>Transfers In</h4>
-                                <table style={{ marginBottom: '15px' }}>
-                                    <thead><tr><th>ID</th><th>From</th><th>To</th><th>Equipment</th><th>Qty</th><th>Date</th></tr></thead>
-                                    <tbody>
-                                        {modalData.transferIn.map(t => <tr key={t.id}><td>{t.id}</td><td>{t.fromBase.name}</td><td>{t.toBase.name}</td><td>{t.equipmentType.name}</td><td>{t.quantity}</td><td>{new Date(t.date).toLocaleString()}</td></tr>)}
-                                        {modalData.transferIn.length === 0 && <tr><td colSpan="6">No incoming transfers.</td></tr>}
-                                    </tbody>
-                                </table>
-
-                                <h4>Transfers Out</h4>
-                                <table style={{ marginBottom: '15px' }}>
-                                    <thead><tr><th>ID</th><th>From</th><th>To</th><th>Equipment</th><th>Qty</th><th>Date</th></tr></thead>
-                                    <tbody>
-                                        {modalData.transferOut.map(t => <tr key={t.id}><td>{t.id}</td><td>{t.fromBase.name}</td><td>{t.toBase.name}</td><td>{t.equipmentType.name}</td><td>{t.quantity}</td><td>{new Date(t.date).toLocaleString()}</td></tr>)}
-                                        {modalData.transferOut.length === 0 && <tr><td colSpan="6">No outgoing transfers.</td></tr>}
-                                    </tbody>
-                                </table>
+                            <div style={{ padding: '10px 0', fontSize: '16px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                    <span>Purchases</span>
+                                    <span>+{modalData.purchasesSum}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                    <span>Transfer In</span>
+                                    <span>+{modalData.transfersInSum}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+                                    <span>Transfer Out</span>
+                                    <span>-{modalData.transfersOutSum}</span>
+                                </div>
+                                <hr />
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', fontWeight: 'bold' }}>
+                                    <span>Net Movement</span>
+                                    <span>{modalData.netMovement}</span>
+                                </div>
                             </div>
                         )}
                     </div>

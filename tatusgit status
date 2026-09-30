@@ -1,0 +1,143 @@
+warning: in the working copy of 'src/components/Sidebar.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/main.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/Dashboard.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/Purchases.jsx', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/src/components/Sidebar.jsx b/src/components/Sidebar.jsx[m
+[1mindex 3e89755..aef2a58 100644[m
+[1m--- a/src/components/Sidebar.jsx[m
+[1m+++ b/src/components/Sidebar.jsx[m
+[36m@@ -11,7 +11,7 @@[m [mconst Sidebar = () => {[m
+             </div>[m
+             <div className="nav-links">[m
+                 <NavLink to="/" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>Dashboard</NavLink>[m
+[31m-                <NavLink to="/equipment" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>Equipment</NavLink>[m
+[32m+[m
+                 <NavLink to="/purchases" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>Purchases</NavLink>[m
+                 <NavLink to="/transfers" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>Transfers</NavLink>[m
+                 {role !== 'LOGISTICS_OFFICER' && ([m
+[36m@@ -42,7 +42,7 @@[m [mexport const Navbar = () => {[m
+     return ([m
+         <div className="navbar">[m
+             <div className="header-right">[m
+[31m-                <span>{getUserName()}</span>[m
+[32m+[m[32m                <span>{formatRole(getUserRole())}</span>[m
+                 <button onClick={handleLogout} className="logout-btn">Logout</button>[m
+             </div>[m
+         </div>[m
+[1mdiff --git a/src/main.jsx b/src/main.jsx[m
+[1mindex dcbfdf0..d3f7c1e 100644[m
+[1m--- a/src/main.jsx[m
+[1m+++ b/src/main.jsx[m
+[36m@@ -3,7 +3,7 @@[m [mimport ReactDOM from 'react-dom/client';[m
+ import { BrowserRouter, Routes, Route } from 'react-router-dom';[m
+ import Login from './pages/Login';[m
+ import Dashboard from './pages/Dashboard';[m
+[31m-import Equipment from './pages/Equipment';[m
+[32m+[m
+ import Layout from './components/Layout';[m
+ import './index.css';[m
+ [m
+[36m@@ -19,7 +19,7 @@[m [mReactDOM.createRoot(document.getElementById('root')).render([m
+         <Route path="/login" element={<Login />} />[m
+         <Route path="/" element={<Layout />}>[m
+           <Route index element={<Dashboard />} />[m
+[31m-          <Route path="equipment" element={<Equipment />} />[m
+[32m+[m
+           <Route path="purchases" element={<Purchases />} />[m
+           <Route path="transfers" element={<Transfers />} />[m
+           <Route path="assignments" element={<Assignments />} />[m
+[1mdiff --git a/src/pages/Dashboard.jsx b/src/pages/Dashboard.jsx[m
+[1mindex 7f9555f..a043dad 100644[m
+[1m--- a/src/pages/Dashboard.jsx[m
+[1m+++ b/src/pages/Dashboard.jsx[m
+[36m@@ -10,6 +10,8 @@[m [mfunction Dashboard() {[m
+     const [equipmentTypes, setEquipmentTypes] = useState([]);[m
+     const [selectedBase, setSelectedBase] = useState('');[m
+     const [selectedEquipment, setSelectedEquipment] = useState('');[m
+[32m+[m[32m    const [startDate, setStartDate] = useState('');[m
+[32m+[m[32m    const [endDate, setEndDate] = useState('');[m
+     [m
+     // Modal state[m
+     const [showModal, setShowModal] = useState(false);[m
+[36m@@ -49,7 +51,9 @@[m [mfunction Dashboard() {[m
+             try {[m
+                 let url = '/dashboard/metrics?';[m
+                 if (selectedBase) url += `baseId=${selectedBase}&`;[m
+[31m-                if (selectedEquipment) url += `equipmentTypeId=${selectedEquipment}`;[m
+[32m+[m[32m                if (selectedEquipment) url += `equipmentTypeId=${selectedEquipment}&`;[m
+[32m+[m[32m                if (startDate) url += `startDate=${startDate}&`;[m
+[32m+[m[32m                if (endDate) url += `endDate=${endDate}&`;[m
+                 const res = await api.get(url);[m
+                 setMetrics(res.data);[m
+             } catch (err) {[m
+[36m@@ -60,7 +64,7 @@[m [mfunction Dashboard() {[m
+             }[m
+         };[m
+         fetchMetrics();[m
+[31m-    }, [selectedBase, selectedEquipment, role]);[m
+[32m+[m[32m    }, [selectedBase, selectedEquipment, startDate, endDate, role]);[m
+ [m
+     useEffect(() => {[m
+         const fetchLogisticsData = async () => {[m
+[36m@@ -81,6 +85,18 @@[m [mfunction Dashboard() {[m
+                     pData = pData.filter(p => p.equipmentType.id.toString() === selectedEquipment);[m
+                     tData = tData.filter(t => t.equipmentType.id.toString() === selectedEquipment);[m
+                 }[m
+[32m+[m[32m                if (startDate) {[m
+[32m+[m[32m                    const start = new Date(startDate);[m
+[32m+[m[32m                    start.setHours(0, 0, 0, 0);[m
+[32m+[m[32m                    pData = pData.filter(p => new Date(p.date) >= start);[m
+[32m+[m[32m                    tData = tData.filter(t => new Date(t.date) >= start);[m
+[32m+[m[32m                }[m
+[32m+[m[32m                if (endDate) {[m
+[32m+[m[32m                    const end = new Date(endDate);[m
+[32m+[m[32m                    end.setHours(23, 59, 59, 999);[m
+[32m+[m[32m                    pData = pData.filter(p => new Date(p.date) <= end);[m
+[32m+[m[32m                    tData = tData.filter(t => new Date(t.date) <= end);[m
+[32m+[m[32m                }[m
+ [m
+                 let purchasesSum = pData.reduce((sum, p) => sum + p.quantity, 0);[m
+                 let transfersInSum = 0;[m
+[36m@@ -120,7 +136,7 @@[m [mfunction Dashboard() {[m
+             }[m
+         };[m
+         fetchLogisticsData();[m
+[31m-    }, [selectedBase, selectedEquipment, role]);[m
+[32m+[m[32m    }, [selectedBase, selectedEquipment, startDate, endDate, role]);[m
+ [m
+     if (role === 'LOGISTICS_OFFICER') {[m
+         return ([m
+[36m@@ -141,6 +157,14 @@[m [mfunction Dashboard() {[m
+                             {equipmentTypes.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}[m
+                         </select>[m
+                     </div>[m
+[32m+[m[32m                    <div className="form-group">[m
+[32m+[m[32m                        <label>Start Date</label>[m
+[32m+[m[32m                        <input type="date" className="form-control" value={startDate} onChange={e => setStartDate(e.target.value)} />[m
+[32m+[m[32m                    </div>[m
+[32m+[m[32m                    <div className="form-group">[m
+[32m+[m[32m                        <label>End Date</label>[m
+[32m+[m[32m                        <input type="date" className="form-control" value={endDate} onChange={e => setEndDate(e.target.value)} />[m
+[32m+[m[32m                    </div>[m
+                 </div>[m
+ [m
+                 {logisticsData ? ([m
+[36m@@ -193,10 +217,28 @@[m [mfunction Dashboard() {[m
+                 tData = tData.filter(t => t.equipmentType.id.toString() === selectedEquipment);[m
+             }[m
+ [m
+[32m+[m[32m            if (startDate) {[m
+[32m+[m[32m                const start = new Date(startDate);[m
+[32m+[m[32m                start.setHours(0, 0, 0, 0);[m
+[32m+[m[32m                pData = pData.filter(p => new Date(p.date) >= start);[m
+[32m+[m[32m                tData = tData.filter(t => new Date(t.date) >= start);[m
+[32m+[m[32m            }[m
+[32m+[m[32m            if (endDate) {[m
+[32m+[m[32m                const end = new Date(endDate);[m
+[32m+[m[32m                end.setHours(23, 59, 59, 999);[m
+[32m+[m[32m                pData = pData.filter(p => new Date(p.date) <= end);[m
+[32m+[m[32m                tData = tData.filter(t => new Date(t.date) <= end);[m
+[32m+[m[32m            }[m
+[32m+[m
+             const transferIn = selectedBase ? tData.filter(t => t.toBase.id.toString() === selectedBase) : tData;[m
+             const transferOut = selectedBase ? tData.filter(t => t.fromBase.id.toString() =
